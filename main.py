@@ -1,145 +1,120 @@
+# Re-import necessary libraries after code execution environment reset
 import os
+import nbformat as nbf
 
-# Create directory to save all three files
-project_dir = "Coding_Samurai_Titanic_EDA_Project"
+# Recreate project directory
+project_dir = "project_4"
 os.makedirs(project_dir, exist_ok=True)
 
-# Define the code for the script and notebook
-project_code = '''\
-# Titanic EDA Project - End-to-End
+# Define Logistic Regression code
+logistic_code = '''\
+# Titanic Project - Logistic Regression
 
 # 🔧 Import Libraries
 import pandas as pd
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 # 📥 Load Data
 df = pd.read_csv("train.csv")
 
-# 📊 Basic Information
-print("Dataset Shape:", df.shape)
-print("Dataset Columns:", df.columns)
-print(df.info())
-print(df.describe())
-
-# 🔍 Missing Values
-missing_values = df.isnull().sum()
-missing_percentage = (missing_values / len(df)) * 100
-missing_df = pd.DataFrame({'Missing Values': missing_values, 'Percentage (%)': missing_percentage})
-print(missing_df)
-
-# 🔧 Handle Missing Data
+# 🔍 Handle Missing Values
 df['Age'].fillna(df['Age'].median(), inplace=True)
 df['Embarked'].fillna(df['Embarked'].mode()[0], inplace=True)
-df.drop(columns='Cabin', inplace=True)
+df.drop(columns=['Cabin', 'Name', 'Ticket', 'PassengerId'], inplace=True)
 
-# 📈 Univariate Analysis
-sns.countplot(data=df, x='Survived')
-plt.title("Survival Count")
-plt.show()
+# 🎯 Encode Categorical Variables
+le = LabelEncoder()
+df['Sex'] = le.fit_transform(df['Sex'])
+df['Embarked'] = le.fit_transform(df['Embarked'])
 
-sns.countplot(data=df, x='Pclass')
-plt.title("Passenger Class Distribution")
-plt.show()
+# 🎯 Feature Selection and Target Variable
+X = df[['Pclass', 'Sex', 'Age', 'Fare', 'Embarked']]
+y = df['Survived']
 
-sns.countplot(data=df, x='Sex')
-plt.title("Gender Distribution")
-plt.show()
+# 📊 Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-df['Age'].hist(bins=30, edgecolor='black')
-plt.title("Age Distribution")
-plt.xlabel("Age")
-plt.ylabel("Count")
-plt.show()
+# 🔃 Feature Scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
 
-df['Fare'].hist(bins=40, edgecolor='black')
-plt.title("Fare Distribution")
-plt.xlabel("Fare")
-plt.ylabel("Count")
-plt.show()
+# 🚀 Train Logistic Regression Model
+model = LogisticRegression()
+model.fit(X_train_scaled, y_train)
 
-# 🔗 Bivariate Analysis
-sns.barplot(data=df, x='Sex', y='Survived')
-plt.title("Survival Rate by Gender")
-plt.show()
-
-sns.barplot(data=df, x='Pclass', y='Survived')
-plt.title("Survival Rate by Passenger Class")
-plt.show()
-
-sns.boxplot(data=df, x='Survived', y='Age')
-plt.title("Age Distribution by Survival")
-plt.show()
-
-# 🔥 Correlation Analysis
-corr = df.corr(numeric_only=True)
-plt.figure(figsize=(10, 6))
-sns.heatmap(corr, annot=True, cmap='coolwarm', fmt=".2f")
-plt.title("Correlation Heatmap")
-plt.show()
+# 📈 Predictions and Evaluation
+y_pred = model.predict(X_test_scaled)
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("Confusion Matrix:\\n", confusion_matrix(y_test, y_pred))
+print("Classification Report:\\n", classification_report(y_test, y_pred))
 '''
 
 # Save .py script
-script_path = os.path.join(project_dir, "titanic_eda.py")
-with open(script_path, "w", encoding="utf-8") as f:
-    f.write(project_code)
+logistic_script_path = os.path.join(project_dir, "titanic_logistic_regression.py")
+with open(logistic_script_path, "w", encoding="utf-8") as f:
+    f.write(logistic_code)
 
 # Save Jupyter notebook
-import nbformat as nbf
+logistic_nb = nbf.v4.new_notebook()
+logistic_nb['cells'] = [nbf.v4.new_code_cell(code) for code in logistic_code.split('\n\n')]
+logistic_notebook_path = os.path.join(project_dir, "titanic_logistic_regression.ipynb")
+with open(logistic_notebook_path, "w", encoding="utf-8") as f:
+    nbf.write(logistic_nb, f)
 
-nb = nbf.v4.new_notebook()
-nb['cells'] = [nbf.v4.new_code_cell(code) for code in project_code.split('\n\n')]
+# Save report markdown
+logistic_report_md = '''\
+# 🧪 Logistic Regression on Titanic Dataset
 
-notebook_path = os.path.join(project_dir, "titanic_eda.ipynb")
-with open(notebook_path, "w", encoding="utf-8") as f:
-    nbf.write(nb, f)
-
-# Create a report (Markdown format)
-report_md = '''\
-# 🛳️ Titanic EDA Project Report
-
-## 🧠 Objective
-Perform a comprehensive Exploratory Data Analysis (EDA) on the Titanic dataset to understand variable distribution, missing values, and potential survival-influencing features.
+## 🎯 Objective
+Build a logistic regression model to predict passenger survival based on features like age, sex, and passenger class.
 
 ---
 
-## 📈 Summary of Steps
+## 🛠️ Preprocessing Steps
 
-### 1. Data Loading
-- Used Titanic dataset from open source (Kaggle/DataScienceDojo)
-- Loaded with `pandas.read_csv()`
+1. **Handle Missing Values**
+   - `Age`: Filled with median
+   - `Embarked`: Filled with mode
+   - `Cabin`: Dropped
 
-### 2. Missing Value Handling
-| Feature   | Missing Values | Action Taken     |
-|-----------|----------------|------------------|
-| Age       | 177            | Filled with median |
-| Cabin     | 687            | Dropped          |
-| Embarked  | 2              | Filled with mode |
+2. **Drop Unnecessary Columns**: `PassengerId`, `Ticket`, `Name`
 
-### 3. Visualizations
-- Countplots for categorical features (`Survived`, `Sex`, `Pclass`)
-- Histograms for numerical features (`Age`, `Fare`)
-- Boxplots and barplots for feature relationships
-- Correlation heatmap
+3. **Label Encoding**: Categorical variables like `Sex` and `Embarked`
 
-### 4. Key Findings
+4. **Feature Scaling**: Standardized numerical features using `StandardScaler`
 
-| Feature    | Insight |
-|------------|---------|
-| Sex        | Females had higher survival |
-| Pclass     | 1st class passengers survived more |
-| Age        | Children had slightly better survival |
-| Fare       | Higher fare = better survival chances |
+---
+
+## 📊 Model Building
+
+- Model: Logistic Regression (from Scikit-learn)
+- Target: `Survived`
+- Features: `Pclass`, `Sex`, `Age`, `Fare`, `Embarked`
+- Train/Test Split: 80/20
+
+---
+
+## 📈 Evaluation Metrics
+
+- Accuracy Score
+- Confusion Matrix
+- Classification Report (Precision, Recall, F1-score)
 
 ---
 
 ## ✅ Conclusion
-This EDA provided crucial insights into survival predictors on the Titanic and showed how to handle missing data and derive patterns from visuals and correlation analysis.
+
+The logistic regression model provides a simple yet effective baseline for classifying survival. Feature importance can be interpreted using model coefficients.
 '''
 
-report_path = os.path.join(project_dir, "titanic_eda_report.md")
-with open(report_path, "w", encoding="utf-8") as f:
-    f.write(report_md)
+logistic_report_path = os.path.join(project_dir, "titanic_logistic_regression_report.md")
+with open(logistic_report_path, "w", encoding="utf-8") as f:
+    f.write(logistic_report_md)
 
+logistic_script_path, logistic_notebook_path, logistic_report_path
 
