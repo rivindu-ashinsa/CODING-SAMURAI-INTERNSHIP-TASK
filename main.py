@@ -142,6 +142,4 @@ report_path = os.path.join(project_dir, "titanic_eda_report.md")
 with open(report_path, "w", encoding="utf-8") as f:
     f.write(report_md)
 
-# Return paths to user
-script_path, notebook_path, report_path
 
